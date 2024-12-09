@@ -22,7 +22,7 @@ import { Box, Divider, Stack, Typography, useTheme } from "@mui/material";
 
 const RoadmapList = () => {
   const [roadmaps, setRoadmaps] = useState([]);
-  const categories = ["Web Development", "Network"];
+  const [categories, setCategories] = useState([]); // State for categories
 
   useEffect(() => {
     // Fetch all roadmaps from the JSON server
@@ -46,7 +46,18 @@ const RoadmapList = () => {
       .catch((error) => {
         console.error("Error fetching roadmaps:", error);
       });
+      
+      // Fetch categories from the server
+    axios
+    .get("http://localhost:3001/categories")
+    .then((response) => {
+      setCategories(response.data); // Set fetched categories
+    })
+    .catch((error) => {
+      console.error("Error fetching categories:", error);
+    });
   }, []);
+
   const theme = useTheme();
   return (
     <div>
@@ -85,53 +96,80 @@ const RoadmapList = () => {
           </h2>
         </Divider>
 
-        {categories.map((category) => (
-          <div key={category}>
-            <Divider textAlign="left" sx={{ mb: 2 }}>
-              <h3
-                style={{
-                  border: "1px solid #EE6C4D",
-                  borderRadius: "7px",
-                  padding: "2px",
-                }}
-              >
-                {category}
-              </h3>
-            </Divider>
-            {/*  display: {xs: "none", sm: "block", }, */}
-            <Stack
-              direction={"row"}
-              sx={{
-                gap: 2,
-                flexWrap: "wrap",
-                justifyContent: { xs: "center", sm: "flex-start" },
-              }}
-            >
-              {roadmaps
-                .filter(
-                  (roadmap) => roadmap.roadmapData.roadmapCategory === category
-                )
-                .map((roadmap) => (
-                  <Box key={roadmap.id} className="all-roadmaps" sx={{ my: 2, backgroundColor: theme.palette.mode === "dark" ? "#262626" : "#f4f6f8", }}>
-                    <Link to={`/roadmap/${roadmap.id}`} className="roadmap">
-                      <img
-                        src={roadmap.roadmapData.imageUrl}
-                        alt={`${category.toLowerCase()} img`}
-                        className="roadmapImg"
-                        width={"100%"}
-                      />
-                      <Typography
-                        component={"div"}
-                        sx={{ py: 1, color: theme.palette.text.primary }}
+        {categories
+          .filter(
+            (category) => category.fieldName.toLowerCase() !== "start here"
+          )
+          .map((category) => {
+            const filteredRoadmaps = roadmaps.filter(
+              (roadmap) =>
+                roadmap.roadmapData.roadmapCategory === category.fieldName
+            );
+
+            return (
+              <div key={category.id}>
+                <Divider textAlign="left" sx={{ mb: 2 }}>
+                  <h3
+                    style={{
+                      border: "1px solid #EE6C4D",
+                      borderRadius: "7px",
+                      padding: "2px",
+                    }}
+                  >
+                    {category.fieldName}
+                  </h3>
+                </Divider>
+
+                {filteredRoadmaps.length > 0 ? (
+                  <Stack
+                    direction={"row"}
+                    sx={{
+                      gap: 2,
+                      flexWrap: "wrap",
+                      justifyContent: { xs: "center", sm: "flex-start" },
+                    }}
+                  >
+                    {filteredRoadmaps.map((roadmap) => (
+                      <Box
+                        key={roadmap.id}
+                        className="all-roadmaps"
+                        sx={{
+                          my: 2,
+                          backgroundColor:
+                            theme.palette.mode === "dark"
+                              ? "#262626"
+                              : "#f4f6f8",
+                        }}
                       >
-                        {roadmap.roadmapData.roadmapName}
-                      </Typography>
-                    </Link>
-                  </Box>
-                ))}
-            </Stack>
-          </div>
-        ))}
+                        <Link to={`/roadmap/${roadmap.id}`} className="roadmap">
+                          <img
+                            src={roadmap.roadmapData.imageUrl}
+                            alt={`${category.fieldName.toLowerCase()} img`}
+                            className="roadmapImg"
+                            width={"100%"}
+                          />
+                          <Typography
+                            component={"div"}
+                            sx={{ py: 1, color: theme.palette.text.primary }}
+                          >
+                            {roadmap.roadmapData.roadmapName}
+                          </Typography>
+                        </Link>
+                      </Box>
+                    ))}
+                  </Stack>
+                ) : (
+                  <Typography
+                    variant="body1"
+                    color={theme.palette.text.primary}
+                    sx={{ mt: 2, textAlign: "center" }}
+                  >
+                    Roadmaps will be added soon...
+                  </Typography>
+                )}
+              </div>
+            );
+          })}
       </Box>
     </div>
   );
